@@ -1,6 +1,7 @@
 const express = require('express')
 const { google } = require('googleapis');
 const bodyParser = require('body-parser');
+const moment = require('moment')
 
 //initialize express
 const app = express()
@@ -10,6 +11,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.post('/data', async (request, response) => {
     try {
         const data = request.query;
+
+        // Tambahkan tanggal dan waktu lokal
+        const currentDate = moment(new Date()).format('D MMMM YYYY')
+        const currentTime = new Date().toLocaleTimeString();
+
+        // Urutkan nilai sesuai dengan urutan yang Anda inginkan
+        const values = [currentDate, currentTime, data.strain, data.stress, data.youngsModulus];
 
         const auth = new google.auth.GoogleAuth({
             keyFile: "keys.json", //the key file
@@ -30,10 +38,10 @@ app.post('/data', async (request, response) => {
         await googleSheetsInstance.spreadsheets.values.append({
             auth, //auth object
             spreadsheetId, //spreadsheet id
-            range: "Sheet1!A:B", //sheet name and range of cells
+            range: "Sheet1!A:E", //sheet name and range of cells (adjust columns accordingly)
             valueInputOption: "USER_ENTERED", // The information will be passed according to what the usere passes in as date, number or text
             resource: {
-                values: [Object.values(data)]
+                values: [values]
             },
         });
 
@@ -42,6 +50,7 @@ app.post('/data', async (request, response) => {
         console.error(error);
     }
 });
+
 
 const PORT = 3000;
 
